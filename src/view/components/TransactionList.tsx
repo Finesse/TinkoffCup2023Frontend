@@ -1,7 +1,9 @@
 import { memo, useDeferredValue, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { DatePicker } from 'antd'
+import dayjs from 'dayjs'
 import { Category, Transaction } from '../../types/entities'
-import { parseDateParam } from '../../utils'
+import { parseDateParam, stringifyDateParam } from '../../utils'
 
 const enum FilterParamName {
   DateFrom = 'dateFrom',
@@ -33,26 +35,53 @@ const Filter = memo(function Filter({ categories }: FilterProps) {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const handleCategorySelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const categoryId = event.target.value
+  function setSearchParam(name: FilterParamName, value: string | null) {
     const params = new URLSearchParams(location.search)
-    if (categoryId) {
-      params.set(FilterParamName.CategoryId, categoryId)
+    if (value) {
+      params.set(name, value)
     } else {
-      params.delete(FilterParamName.CategoryId)
+      params.delete(name)
     }
     navigate(`${location.pathname}?${params.toString()}`)
   }
 
+  const handleCategorySelect = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSearchParam(FilterParamName.CategoryId, event.target.value)
+  }
+
+  const handleFromDateChange = (date: dayjs.Dayjs | null) => {
+    setSearchParam(FilterParamName.DateFrom, date ? stringifyDateParam(date.toDate()) : null)
+  }
+
+  const handleToDateChange = (date: dayjs.Dayjs | null) => {
+    setSearchParam(FilterParamName.DateTo, date ? stringifyDateParam(date.toDate()) : null)
+  }
+
   return (
     <div>
-      Категория:
-      <select value={filters.categoryId ?? ''} onChange={handleCategorySelect}>
-        <option value="">Любая</option>
-        {categories.map(category => (
-          <option value={category.id} key={category.id}>{category.icon && `${category.icon} `}{category.name}</option>
-        ))}
-      </select>
+      <div>
+        Категория:
+        <select value={filters.categoryId ?? ''} onChange={handleCategorySelect}>
+          <option value="">Любая</option>
+          {categories.map(category => (
+            <option value={category.id} key={category.id}>{category.icon && `${category.icon} `}{category.name}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        Дата:
+        <DatePicker
+          value={filters.timeFrom ? dayjs(filters.timeFrom) : null}
+          onChange={handleFromDateChange}
+          placeholder="Выберите дату"
+        />
+        –
+        <DatePicker
+          value={filters.timeTo ? dayjs(filters.timeTo).subtract(1, 'day') : null}
+          onChange={handleToDateChange}
+          placeholder="Выберите дату"
+        />
+      </div>
     </div>
   )
 })
