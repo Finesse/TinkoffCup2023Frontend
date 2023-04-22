@@ -1,9 +1,11 @@
 import { memo, useDeferredValue, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { DatePicker } from 'antd'
+import { useDispatch } from 'react-redux'
+import { Button, DatePicker, Popconfirm } from 'antd'
 import dayjs from 'dayjs'
 import { Category, Transaction } from '../../types/entities'
 import { parseDateParam, stringifyDateParam } from '../../utils'
+import { actions } from '../../state/store'
 
 const enum FilterParamName {
   DateFrom = 'dateFrom',
@@ -21,7 +23,7 @@ export default memo(function TransactionList({ accountId, transactions, categori
   return (
     <div>
       <Filter categories={categories} />
-      <Transactions transactions={transactions} categories={categories} groupByDate />
+      <Transactions transactions={transactions} categories={categories} accountId={accountId} />
     </div>
   )
 })
@@ -89,10 +91,10 @@ const Filter = memo(function Filter({ categories }: FilterProps) {
 interface TransactionsProps {
   transactions: Transaction[],
   categories: Category[],
-  groupByDate?: boolean,
+  accountId: string,
 }
 
-const Transactions = memo(function Transactions({ transactions, categories }: TransactionsProps) {
+const Transactions = memo(function Transactions({ transactions, categories, accountId }: TransactionsProps) {
   const filters = useFiltersFromUrl()
   const deferredFilters = useDeferredValue(filters)
   const filteredTransactions = useMemo(() => filterTransactions(transactions, deferredFilters), [transactions, deferredFilters])
@@ -105,7 +107,12 @@ const Transactions = memo(function Transactions({ transactions, categories }: Tr
         <div>{new Date(transactions[0].time).toLocaleDateString()}</div>
         <ul>
           {transactions.map(transaction => (
-            <TransactionLine transaction={transaction} categoryMap={categoryMap} key={transaction.id} />
+            <TransactionLine
+              key={transaction.id}
+              transaction={transaction}
+              categoryMap={categoryMap}
+              accountId={accountId}
+            />
           ))}
         </ul>
       </div>
@@ -113,12 +120,17 @@ const Transactions = memo(function Transactions({ transactions, categories }: Tr
   </>
 })
 
-interface TransactionProps {
+interface TransactionLineProps {
   transaction: Transaction,
   categoryMap: Map<string, Category>,
+  accountId: string,
 }
 
-const TransactionLine = memo(function TransactionLine({ transaction, categoryMap }: TransactionProps) {
+const TransactionLine = memo(function TransactionLine({ transaction, categoryMap, accountId }: TransactionLineProps) {
+  const dispatch = useDispatch()
+
+  const handleDelete = () => dispatch(actions.transactionDelete({ accountId, ids: [transaction.id] }))
+
   return (
     <li key={transaction.id}>
       {transaction.value < 0 ? '−' : '+'}{Math.abs(transaction.value)}
@@ -128,6 +140,16 @@ const TransactionLine = memo(function TransactionLine({ transaction, categoryMap
       {transaction.categoryId ? (categoryMap.get(transaction.categoryId)?.name ?? '(удалённая категория)') : '(без категории)'}
       {' | '}
       {transaction.description}
+      {' | '}
+      <Popconfirm
+        title={`Вы действительно хотите удалить этот ${transaction.value > 0 ? 'доход' : 'расход'}?`}
+        description="Это действие нельзя отменить (пока что)"
+        okText="Да"
+        cancelText="Нет"
+        onConfirm={handleDelete}
+      >
+        <Button type="link">Удалить</Button>
+      </Popconfirm>
     </li>
   )
 })
