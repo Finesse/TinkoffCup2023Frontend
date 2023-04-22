@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/TinkoffCup2023Frontend/static/css/main.4d549a0e.css",
+    "main.js": "/TinkoffCup2023Frontend/static/js/main.3f442946.js",
+    "index.html": "/TinkoffCup2023Frontend/index.html",
+    "main.4d549a0e.css.map": "/TinkoffCup2023Frontend/static/css/main.4d549a0e.css.map",
+    "main.3f442946.js.map": "/TinkoffCup2023Frontend/static/js/main.3f442946.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.4d549a0e.css",
+    "static/js/main.3f442946.js"
+  ]
+}
