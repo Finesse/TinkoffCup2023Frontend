@@ -1,8 +1,12 @@
 import React from 'react';
+import { useSelector } from 'react-redux'
 import logo from './logo.svg';
 import './App.css';
+import { State } from './types/entities'
 
 function App() {
+  const state = useSelector((state: State) => state)
+
   return (
     <div className="App">
       <header className="App-header">
@@ -19,6 +23,9 @@ function App() {
           Learn React
         </a>
       </header>
+      <pre>
+        {JSON.stringify(state, null, 2)}
+      </pre>
     </div>
   );
 }
