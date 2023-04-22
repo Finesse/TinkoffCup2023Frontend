@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useSelector } from 'react-redux'
 import { State } from '../../types/entities'
 import { selectAccount } from '../../state/selectors'
@@ -9,7 +9,7 @@ export default function Main() {
   const account = useSelector((state: State) => selectAccount(state, accountId))
 
   if (!account) {
-    return <div>Аккаунт с идентификатором {accountId} не существует</div>
+    return <div>Аккаунт с идентификатором {accountId} не существует. <Link to="/">Вернуться ↩︎</Link></div>
   }
 
   return (

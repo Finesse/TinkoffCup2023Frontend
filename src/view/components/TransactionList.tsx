@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react'
+import { memo, useDeferredValue, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Category, Transaction } from '../../types/entities'
 import { parseDateParam } from '../../utils'
@@ -48,7 +48,7 @@ const Filter = memo(function Filter({ categories }: FilterProps) {
     <div>
       Категория:
       <select value={filters.categoryId ?? ''} onChange={handleCategorySelect}>
-        <option value="">Не фильтровать</option>
+        <option value="">Любая</option>
         {categories.map(category => (
           <option value={category.id} key={category.id}>{category.icon && `${category.icon} `}{category.name}</option>
         ))}
@@ -65,19 +65,22 @@ interface TransactionsProps {
 
 const Transactions = memo(function Transactions({ transactions, categories }: TransactionsProps) {
   const filters = useFiltersFromUrl()
-  const filteredTransactions = useMemo(() => filterTransactions(transactions, filters), [transactions, filters])
+  const deferredFilters = useDeferredValue(filters)
+  const filteredTransactions = useMemo(() => filterTransactions(transactions, deferredFilters), [transactions, deferredFilters])
   const transactionGroups = useMemo(() => groupTransactionsByDate(filteredTransactions), [filteredTransactions])
   const categoryMap = useMemo(() => makeCategoryMap(categories), [categories])
 
   return <>
-    {transactionGroups.map((transactions, index) => <>
-      <div>{new Date(transactions[0].time).toLocaleDateString()}</div>
-      <ul>
-        {transactions.map(transaction => (
-          <TransactionLine transaction={transaction} categoryMap={categoryMap} key={transaction.id} />
-        ))}
-      </ul>
-    </>)}
+    {transactionGroups.map((transactions, index) => (
+      <div key={new Date(transactions[0].time).toDateString()}>
+        <div>{new Date(transactions[0].time).toLocaleDateString()}</div>
+        <ul>
+          {transactions.map(transaction => (
+            <TransactionLine transaction={transaction} categoryMap={categoryMap} key={transaction.id} />
+          ))}
+        </ul>
+      </div>
+    ))}
   </>
 })
 
@@ -91,9 +94,11 @@ const TransactionLine = memo(function TransactionLine({ transaction, categoryMap
     <li key={transaction.id}>
       {transaction.value < 0 ? '−' : '+'}{Math.abs(transaction.value)}
       {' | '}
-      {transaction.time}
+      {new Date(transaction.time).toLocaleString()}
       {' | '}
       {transaction.categoryId ? (categoryMap.get(transaction.categoryId)?.name ?? '(удалённая категория)') : '(без категории)'}
+      {' | '}
+      {transaction.description}
     </li>
   )
 })

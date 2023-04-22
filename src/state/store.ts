@@ -1,29 +1,41 @@
 import { configureStore, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { persistReducer, persistStore } from 'redux-persist'
+import { FLUSH, REHYDRATE,  PAUSE,  PERSIST, PURGE, REGISTER } from 'redux-persist'
+import storage from 'redux-persist/lib/storage'
 import { Account, Category, State, Transaction } from '../types/entities'
 import { makeId } from '../utils'
-import { createDefaultCategories } from './factories'
+import { createDefaultCategories, createRandomTransactions } from './factories'
 import { selectAccount, selectCategory, selectTransaction } from './selectors'
-
-const accountId = makeId()
-const workCategoryId = makeId()
-const initialState: State = {
-  accountId,
-  accounts: [
-    {
-      id: accountId,
-      name: 'Карманные деньги',
-      icon: '😎',
-      categories: createDefaultCategories(workCategoryId),
-      transactions: [
-        { id: makeId(), value: 10000, time: '2023-04-01T10:00:00.000Z', categoryId: workCategoryId, description: 'Зарплата' }
-      ],
-    },
-  ],
-}
 
 const appSlice = createSlice({
   name: 'app',
-  initialState,
+  initialState: (): State => {
+    const accountId = makeId()
+    const workCategoryId = makeId()
+    const categories = createDefaultCategories(workCategoryId)
+    return {
+      accountId,
+      accounts: [
+        {
+          id: accountId,
+          name: 'Карманные деньги',
+          icon: '😎',
+          categories,
+          transactions: [
+            { id: makeId(), value: 10000, time: '2023-04-01T10:00:00.000Z', categoryId: workCategoryId, description: 'Зарплата' },
+            ...createRandomTransactions(
+              99,
+              categories,
+              new Date('2023-04-01T11:00:00.000Z'),
+              new Date(),
+              100,
+              10000,
+            ),
+          ],
+        },
+      ],
+    }
+  },
   reducers: {
     accountSelect: (state, action: PayloadAction<string | null>) => {
       state.accountId = action.payload
@@ -106,9 +118,22 @@ const appSlice = createSlice({
   }
 })
 
+const persistedReducer = persistReducer({
+  key: 'appState',
+  storage,
+}, appSlice.reducer)
+
 export const store = configureStore({
-  reducer: appSlice.reducer,
-  // todo: Добавить middleware, которое сохраняет состояние в браузере
+  reducer: persistedReducer,
+  middleware: (getDefaultMiddleware) =>
+    // Костыль: https://github.com/rt2zz/redux-persist/issues/988#issuecomment-552242978
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
+      },
+    }),
 })
+
+export const persistor = persistStore(store)
 
 export const actions = appSlice.actions
