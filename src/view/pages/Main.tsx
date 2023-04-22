@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { State } from '../../types/entities'
 import { selectAccount } from '../../state/selectors'
 import TransactionList from '../components/TransactionList'
+import styles from './Main.module.css'
 
 export default function Main() {
   const { accountId } = useParams() as { accountId: string }
@@ -13,6 +14,8 @@ export default function Main() {
   }
 
   return (
-    <TransactionList accountId={accountId} transactions={account.transactions} categories={account.categories} />
+    <div className={styles.page}>
+      <TransactionList accountId={accountId} transactions={account.transactions} categories={account.categories} />
+    </div>
   )
 }

@@ -1,11 +1,12 @@
 import { memo, useDeferredValue, useMemo } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { DatePicker, Select } from 'antd'
+import { DatePicker, Select, Space } from 'antd'
 import dayjs from 'dayjs'
 import { Category, Transaction } from '../../types/entities'
 import { groupTransactionsByDate, parseDateParam, stringifyDateParam } from '../../utils'
 import TransactionLine from './TransactionLine'
 import TransactionsSummary from './TransactionsSummary'
+import styles from './TransactionList.module.css'
 
 const enum FilterParamName {
   DateFrom = 'dateFrom',
@@ -82,7 +83,7 @@ const Filter = memo(function Filter({ categories }: FilterProps) {
   }
 
   return (
-    <div>
+    <Space wrap className={styles.filter}>
       Дата:
       <DatePicker
         value={filters.timeFrom ? dayjs(filters.timeFrom) : null}
@@ -95,7 +96,6 @@ const Filter = memo(function Filter({ categories }: FilterProps) {
         onChange={handleToDateChange}
         placeholder="Выберите дату"
       />
-      {' '}
       Направление:
       <Select
         value={filters.direction}
@@ -107,7 +107,6 @@ const Filter = memo(function Filter({ categories }: FilterProps) {
         ]}
         style={{ width: 100 }}
       />
-      {' '}
       Категория:
       <Select
         value={filters.categoryId}
@@ -116,9 +115,9 @@ const Filter = memo(function Filter({ categories }: FilterProps) {
           { value: null, label: 'Любая' },
           ...categories.map(category => ({ value: category.id, label: `${category.icon && `${category.icon} `}${category.name}` })),
         ]}
-        style={{ width: 200 }}
+        style={{ width: 150 }}
       />
-    </div>
+    </Space>
   )
 })
 
